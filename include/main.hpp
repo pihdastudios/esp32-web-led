@@ -16,7 +16,7 @@
 
 // #include "cJSON.h"
 
-#define LED_PIN GPIO_NUM_23
+#define LED_PIN1 GPIO_NUM_23
 #define LED_PIN2 GPIO_NUM_5
 
 #define EXAMPLE_ESP_WIFI_SSID "null"
@@ -33,7 +33,8 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_FAIL_BIT BIT1
 
 TaskHandle_t ISR = nullptr;
-static bool led_status = false;
+static bool led1_status = false;
+static bool led2_status = false;
 
 static SemaphoreHandle_t mutex;
 
@@ -49,17 +50,14 @@ void init_gpio();
 void init_wifi();
 
 esp_err_t root_get_handler(httpd_req_t *req);
-esp_err_t hello_get_handler(httpd_req_t *req);
-esp_err_t echo_post_handler(httpd_req_t *req);
+esp_err_t led1_get_handler(httpd_req_t *req);
+esp_err_t led2_get_handler(httpd_req_t *req);
 esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err);
-esp_err_t ctrl_put_handler(httpd_req_t *req);
 httpd_handle_t start_webserver();
-void stop_webserver(httpd_handle_t server);
 
-void disconnect_handler(void *arg, esp_event_base_t event_base,
-                        int32_t event_id, void *event_data);
-void connect_handler(void *arg, esp_event_base_t event_base,
-                     int32_t event_id, void *event_data);
+void stop_webserver(httpd_handle_t server);
+void disconnect_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
+void connect_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
 
 const char TAG[] = "EXAMPLE";
 
@@ -70,27 +68,18 @@ static const httpd_uri_t root = {
     .uri = "/",
     .method = HTTP_GET,
     .handler = root_get_handler,
-    .user_ctx = nullptr
-};
-
-static const httpd_uri_t hello = {
-    .uri = "/hello",
-    .method = HTTP_GET,
-    .handler = hello_get_handler,
-    /* Let's pass response string in user
-     * context to demonstrate it's usage */
-    .user_ctx = (void *)"Hello World!"};
-
-static const httpd_uri_t echo = {
-    .uri = "/echo",
-    .method = HTTP_POST,
-    .handler = echo_post_handler,
     .user_ctx = nullptr};
 
-static const httpd_uri_t ctrl = {
-    .uri = "/ctrl",
-    .method = HTTP_PUT,
-    .handler = ctrl_put_handler,
+static const httpd_uri_t led1 = {
+    .uri = "/led1",
+    .method = HTTP_GET,
+    .handler = led1_get_handler,
+    .user_ctx = nullptr};
+
+static const httpd_uri_t led2 = {
+    .uri = "/led2",
+    .method = HTTP_GET,
+    .handler = led2_get_handler,
     .user_ctx = nullptr};
 
 extern "C"
